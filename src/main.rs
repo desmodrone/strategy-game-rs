@@ -1,4 +1,4 @@
-use bevy::prelude::*;
+use bevy::{prelude::*, window::WindowResolution};
 
 const NUM_COLUMNS: usize = 20;
 const NUM_ROWS: usize = 20;
@@ -116,8 +116,7 @@ fn create_battlefield_system(
         None,
     );
     let tiles_atlas_handle = texture_atlases.add(tiles_atlas);
-
-    const SCALE: f32 = 4.0;
+    //const SCALE: f32 = 4.0;
     const BATTLEFIELD_WIDTH_IN_TILES: usize = 13;
     const BATTLEFIELD_HEIGHT_IN_TILES: usize = 6;
     let tile_map: [[Tile; BATTLEFIELD_WIDTH_IN_TILES]; BATTLEFIELD_HEIGHT_IN_TILES] = [
@@ -213,6 +212,14 @@ fn create_battlefield_system(
         ],
     ];
 
+    const HALF_TILE_SIZE: f32 = TILE_SIZE / 2.0;
+    const HALF_BATTLEFIELD_WIDTH_IN_PIXELS: f32 =
+        BATTLEFIELD_WIDTH_IN_TILES as f32 * TILE_SIZE / 2.0;
+    const HALF_BATTLEFIELD_HEIGHT_IN_PIXELS: f32 =
+        BATTLEFIELD_HEIGHT_IN_TILES as f32 * TILE_SIZE / 2.0;
+    const WIDTH_CENTER_OFFSET: f32 = HALF_BATTLEFIELD_WIDTH_IN_PIXELS - HALF_TILE_SIZE;
+    const HEIGHT_CENTER_OFFSET: f32 = HALF_BATTLEFIELD_HEIGHT_IN_PIXELS - HALF_TILE_SIZE;
+
     for (y, row) in tile_map.iter().enumerate() {
         for (x, col) in row.iter().enumerate() {
             commands.spawn(SpriteSheetBundle {
@@ -220,11 +227,10 @@ fn create_battlefield_system(
                 sprite: TextureAtlasSprite::new(col.index),
                 transform: Transform {
                     translation: Vec3 {
-                        x: x as f32 * TILE_SIZE * SCALE,
-                        y: y as f32 * TILE_SIZE * SCALE,
+                        x: x as f32 * TILE_SIZE - WIDTH_CENTER_OFFSET,
+                        y: y as f32 * TILE_SIZE - HEIGHT_CENTER_OFFSET,
                         z: 0.0,
                     },
-                    scale: Vec3::splat(SCALE),
                     ..default()
                 },
                 ..default()
@@ -235,7 +241,20 @@ fn create_battlefield_system(
 
 fn main() {
     App::new()
-        .add_plugins(DefaultPlugins)
+        .insert_resource(Msaa::Off)
+        .add_plugins(
+            DefaultPlugins
+                .set(WindowPlugin {
+                    primary_window: Some(Window {
+                        title: "BlocWars".to_string(),
+                        resolution: WindowResolution::new(9600.0, 540.0)
+                            .with_scale_factor_override(4.0),
+                        ..default()
+                    }),
+                    ..default()
+                })
+                .set(ImagePlugin::default_nearest()),
+        )
         .add_startup_system(create_battlefield_system)
         .run();
 }
